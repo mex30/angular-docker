@@ -13,12 +13,16 @@ RUN npm run build -- --configuration ${BUILD_ENV}
 FROM nginx:alpine
 RUN apk add --no-cache gettext
 
+# template con variabile API_HOST
 COPY nginx.prod.conf.template /etc/nginx/templates/default.conf.template
+
+# default per docker compose locale (Render lo sovrascrive)
 ENV API_HOST=http://api:3000
 
-# Genera SEMPRE la conf finale prima di avviare nginx
+# genera SEMPRE default.conf (sovrascrive quello stock) e poi avvia nginx
 CMD ["/bin/sh","-lc","envsubst '$$API_HOST' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
 
 COPY --from=build /app/dist/ /usr/share/nginx/html
 EXPOSE 80
+
 

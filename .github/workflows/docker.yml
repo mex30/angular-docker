@@ -1,0 +1,45 @@
+name: Build & Push Docker images
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build & Push API
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.api
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/angular-api:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/angular-api:sha-${{ github.sha }}
+
+      - name: Build & Push Web (Angular + Nginx)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.prod
+          push: true
+          build-args: |
+            BUILD_ENV=production
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/angular-web:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/angular-web:sha-${{ github.sha }}
+
